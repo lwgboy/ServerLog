@@ -5,6 +5,8 @@ import org.springframework.stereotype.Component;
 import javax.validation.constraints.NotNull;
 import javax.websocket.*;
 import javax.websocket.server.ServerEndpoint;
+import java.io.IOException;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -14,14 +16,35 @@ import java.util.List;
 @ServerEndpoint(value = "/websocket")
 public class WebSocketClient extends Client {
 
-    @Override
-    public void send(@NotNull String data) {
+    /**
+     * 本连接对应的 Session
+     */
+    private Session mSession;
 
+    @Override
+    protected void doSend(@NotNull String data) throws Exception {
+        if (mSession == null) {
+            throw new NullPointerException("mSession is null");
+        }
+        // 同步发送消息
+        mSession.getBasicRemote().sendText(data);
     }
 
     @Override
     public @NotNull List<String> getInterestedType() {
-        return null;
+        return Collections.EMPTY_LIST;
+    }
+
+    @Override
+    public void close() {
+        setOnMessageListener(null);
+        if (mSession != null) {
+            try {
+                mSession.close();
+            } catch (IOException ignore) {
+                // ignore
+            }
+        }
     }
 
     /**
@@ -29,7 +52,8 @@ public class WebSocketClient extends Client {
      */
     @OnOpen
     public void onOpen(Session session) {
-        System.out.println("123123123");
+        this.mSession = session;
+        LogServer.getInstance().addClient(this);
     }
 
     /**
@@ -37,6 +61,8 @@ public class WebSocketClient extends Client {
      */
     @OnClose
     public void onClose(Session session) {
+        LogServer.getInstance().removeClient(this);
+        this.mSession = null;
     }
 
     /**
@@ -46,11 +72,14 @@ public class WebSocketClient extends Client {
      */
     @OnMessage
     public void onMessage(Session session, String message) {
+        relsoveMessage(message);
     }
 
 
     @OnError
     public void onError(Session session, Throwable error) {
+        LogServer.getInstance().removeClient(this);
+        this.mSession = null;
     }
 
 }
