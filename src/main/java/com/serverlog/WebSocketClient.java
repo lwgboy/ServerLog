@@ -26,6 +26,9 @@ public class WebSocketClient extends Client {
         if (mSession == null) {
             throw new NullPointerException("mSession is null");
         }
+        if (!mSession.isOpen()) {
+            throw new Exception("websocket is not open");
+        }
         // 同步发送消息
         mSession.getBasicRemote().sendText(data);
     }

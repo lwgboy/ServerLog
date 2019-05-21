@@ -1,8 +1,13 @@
 package com.serverlog;
 
 
+import com.google.gson.reflect.TypeToken;
+import com.serverlog.dto.DataDto;
+
 import javax.validation.constraints.NotNull;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 /**
@@ -10,6 +15,11 @@ import java.util.UUID;
  * 可能是 Socket 也可能是 WebSocket
  */
 public abstract class Client {
+
+    /**
+     * 默认的显示的名称
+     */
+    public static final String DEFAULT_DISPLAYNAME = "UnKnow";
 
     /**
      * 这个端的名称,这个名称要保证唯一,
@@ -20,6 +30,20 @@ public abstract class Client {
      */
     private String uniqueName = UUID.randomUUID().toString();
 
+    /**
+     * 这是这个 Client 提供的服务类型,当 Client 连接之后,可以发送固定格式的数据告知服务器
+     * 你这个 Client 是什么数据的提供者
+     */
+    private Set<String> mDataProvideTypes = new HashSet<>();
+
+    /**
+     * 显示的名称
+     */
+    private String mDisplayName;
+
+    /**
+     * 外部设置的消息监听器
+     */
     protected OnMessageListener mOnMessageListener;
 
     /**
@@ -62,13 +86,38 @@ public abstract class Client {
     }
 
     /**
+     * 获取显示的名称,如果客户端没有传递,就显示一个默认的,但是不能为空
+     *
+     * @return
+     */
+    @NotNull
+    public final String getDisplayName() {
+        if (mDisplayName == null || "".equals(mDisplayName)) {
+            return DEFAULT_DISPLAYNAME;
+        } else {
+            return mDisplayName;
+        }
+    }
+
+    /**
      * 处理数据
      *
      * @param data 客户端发送过来的数据
      */
     protected void relsoveMessage(@NotNull String data) {
-        if (mOnMessageListener == null) {
-            mOnMessageListener.accept(this, data);
+        DataDto dataDto = LogServer.gson.fromJson(data, DataDto.class);
+        if (DataType.TYPE_SET_DISPLAY_NAME.equals(dataDto.getType())) {
+            // 设置显示的名称
+            mDisplayName = dataDto.getData();
+        } else if (DataType.TYPE_SET_DATA_PROVIDER_TYPE.equals(dataDto.getType())) {
+            List<String> dataTypes = LogServer.gson.fromJson(dataDto.getData(), new TypeToken<List<String>>() {
+            }.getType());
+            mDataProvideTypes.clear();
+            mDataProvideTypes.addAll(dataTypes);
+        } else {
+            if (mOnMessageListener == null) {
+                mOnMessageListener.accept(this, data);
+            }
         }
     }
 

@@ -75,7 +75,7 @@ public class LogServer implements Client.OnMessageListener, Runnable {
             // 解析成为 DataDto 对象
             DataDto dataDto = gson.fromJson(data, DataDto.class);
             // 如果是心跳包则不管
-            if (DataDto.TYPE_HEARTBEAT.equals(dataDto.getType())) {
+            if (DataType.TYPE_HEARTBEAT.equals(dataDto.getType())) {
                 return;
             }
             // 获取数据的类型
