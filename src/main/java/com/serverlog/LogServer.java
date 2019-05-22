@@ -19,12 +19,12 @@ public class LogServer implements Client.OnMessageListener, Runnable {
     /**
      * Json 的转化器
      */
-    public static final Gson gson = new Gson();
+    public static final Gson GSON = new Gson();
 
     /**
      * 这是一个心跳类型的数据
      */
-    public static final String DATA_HEARTBEAT = gson.toJson(DataDto.HEARTBEAT);
+    public static final String DATA_HEARTBEAT = GSON.toJson(DataDto.HEARTBEAT);
 
     /**
      * 单例对象
@@ -42,6 +42,8 @@ public class LogServer implements Client.OnMessageListener, Runnable {
 
     // 构造函数私有化
     private LogServer() {
+        // 添加一个服务器端的 Client 和其他 Client 进行交互
+        mClients.add(new ServerClient());
     }
 
     /**
@@ -61,7 +63,7 @@ public class LogServer implements Client.OnMessageListener, Runnable {
     }
 
     @Override
-    public synchronized void accept(@NotNull Client originClient, @NotNull String msg) {
+    public synchronized void accept(@NotNull Client originClient, @NotNull DataDto msg) {
         send(msg);
     }
 
@@ -70,10 +72,8 @@ public class LogServer implements Client.OnMessageListener, Runnable {
      *
      * @param data 要发送的数据
      */
-    public synchronized void send(@NotNull String data) {
+    public synchronized void send(@NotNull DataDto dataDto) {
         try {
-            // 解析成为 DataDto 对象
-            DataDto dataDto = gson.fromJson(data, DataDto.class);
             // 如果是心跳包则不管
             if (DataType.TYPE_HEARTBEAT.equals(dataDto.getType())) {
                 return;
@@ -83,7 +83,7 @@ public class LogServer implements Client.OnMessageListener, Runnable {
             // 获取到要发送的客户端
             List<Client> clients = getClientsWithType(type);
             for (Client entity : clients) {
-                entity.send(data);
+                entity.send(dataDto);
             }
         } catch (Exception ignore) {
             // ignore
@@ -96,7 +96,7 @@ public class LogServer implements Client.OnMessageListener, Runnable {
      * @param targetName 客户端的唯一的名称
      * @param data       要发送的数据
      */
-    public synchronized void sendToTarget(@NotNull String targetName, @NotNull String data) {
+    public synchronized void sendToTarget(@NotNull String targetName, @NotNull DataDto dataDto) {
         if (targetName == null) {
             return;
         }
@@ -108,7 +108,7 @@ public class LogServer implements Client.OnMessageListener, Runnable {
                 targetClient = entity;
             }
         }
-        targetClient.send(data);
+        targetClient.send(dataDto);
     }
 
     /**

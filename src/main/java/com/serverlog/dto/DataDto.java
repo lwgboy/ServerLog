@@ -14,7 +14,12 @@ public class DataDto {
     public static final DataDto HEARTBEAT = new DataDto(DataType.TYPE_HEARTBEAT, null);
 
     /**
-     * 数据的类型
+     * 目标接收者,如果有值的话会直接发送给此目标
+     */
+    private String receiver;
+
+    /**
+     * 数据的类型,如果 {@link #receiver} 为 null,表示消息是
      */
     private String type;
 
@@ -24,8 +29,8 @@ public class DataDto {
      * @see #type
      * <p>
      * 数据的所有类型
-     * @see #TYPE_NETWORK
-     * @see #TYPE_TOMCAT_LOG
+     * @see DataType#TYPE_NETWORK
+     * @see DataType#TYPE_TOMCAT_LOG
      */
     private String data;
 

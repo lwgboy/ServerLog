@@ -11,7 +11,7 @@ public class DataType {
     /**
      * 表示这是一个心跳包的类型
      */
-    public static final String TYPE_HEARTBEAT = "heartbeat";
+    public static final String TYPE_HEARTBEAT = "--------heartbeat--------";
 
     /**
      * 客户端提供的名称
@@ -21,12 +21,17 @@ public class DataType {
     /**
      * 客户端设置数据提供的类型
      */
-    public static final String TYPE_SET_DATA_PROVIDER_TYPE = "setDataProviderType";
+    public static final String TYPE_SET_DATA_PROVIDER = "setDataProviderType";
 
     /**
-     * 客户端订阅自己感兴趣的类型的数据
+     * 客户端设置自己感兴趣的类型的数据
      */
-    public static final String TYPE_SUBSCIBE_DATA = "subscibeData";
+    public static final String TYPE_SET_DATA_SUBSCIBE = "setDataSubscibeType";
+
+    /**
+     * 表示获取某几个数据类型的数据提供 Client 的信息
+     */
+    public static final String TYPE_GETDATAPROVIDERS = "getDataProviders";
 
     // 下面的类型其实消息中转站不会用到,但是作为各个端自己统一的这里就全部罗列一下
 

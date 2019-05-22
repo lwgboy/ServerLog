@@ -1,5 +1,6 @@
 package com.serverlog;
 
+import com.serverlog.dto.DataDto;
 import org.springframework.stereotype.Component;
 
 import javax.validation.constraints.NotNull;
@@ -10,7 +11,7 @@ import java.util.Collections;
 import java.util.List;
 
 /**
- * 针对 websocket 协议的
+ * 针对 websocket 协议的 Client 实现,每一个连接进来都会产生一个 Client
  */
 @Component
 @ServerEndpoint(value = "/websocket")
@@ -22,7 +23,7 @@ public class WebSocketClient extends Client {
     private Session mSession;
 
     @Override
-    protected void doSend(@NotNull String data) throws Exception {
+    protected void doSend(@NotNull DataDto data) throws Exception {
         if (mSession == null) {
             throw new NullPointerException("mSession is null");
         }
@@ -30,7 +31,7 @@ public class WebSocketClient extends Client {
             throw new Exception("websocket is not open");
         }
         // 同步发送消息
-        mSession.getBasicRemote().sendText(data);
+        mSession.getBasicRemote().sendText(LogServer.GSON.toJson(data));
     }
 
     @Override
@@ -41,6 +42,7 @@ public class WebSocketClient extends Client {
     @Override
     public void close() {
         setOnMessageListener(null);
+        LogServer.getInstance().removeClient(this);
         if (mSession != null) {
             try {
                 mSession.close();

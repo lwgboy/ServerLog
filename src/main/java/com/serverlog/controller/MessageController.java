@@ -21,7 +21,7 @@ public class MessageController {
     @PostMapping("send")
     public void send(@NotNull DataDto data) {
         // 发送数据
-        LogServer.getInstance().send(LogServer.gson.toJson(data));
+        LogServer.getInstance().send(data);
     }
 
 }

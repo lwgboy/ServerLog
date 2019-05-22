@@ -13,4 +13,9 @@ public class DataProviderType {
      */
     public static final String TYPE_NETWORK = "networkProvider";
 
+    /**
+     * 表示这是一个 tomcat 的 log 数据的提供类者
+     */
+    public static final String TYPE_TOMCAT_LOG = "tomcatLogProvider";
+
 }

@@ -28,13 +28,19 @@ public abstract class Client {
      * (其实就是给自己起个名字别名,比如 Android 端的某个机器为 '一嗨租车 huawei 8.0')
      * 唯一的名字用来标记每一个客户端,别名用来展示
      */
-    private String uniqueName = UUID.randomUUID().toString();
+    protected String uniqueName = UUID.randomUUID().toString();
 
     /**
      * 这是这个 Client 提供的服务类型,当 Client 连接之后,可以发送固定格式的数据告知服务器
      * 你这个 Client 是什么数据的提供者
      */
     private Set<String> mDataProvideTypes = new HashSet<>();
+
+    /**
+     * 这是这个 Client 感兴趣的数据类型,当 Client 连接之后,可以发送固定格式的数据告知服务器
+     * 你这个 Client 对什么数据类型感兴趣
+     */
+    private Set<String> mDataSubscribeTypes = new HashSet<>();
 
     /**
      * 显示的名称
@@ -51,7 +57,7 @@ public abstract class Client {
      *
      * @param data 发送的消息
      */
-    public final void send(@NotNull String data) {
+    public final void send(@NotNull DataDto data) {
         try {
             doSend(data);
         } catch (Exception ignore) {
@@ -60,12 +66,12 @@ public abstract class Client {
     }
 
     /**
-     * 执行发送信息
+     * 执行发送信息,当发送心跳包失败的时候就会被管理中心踢掉
      *
      * @param data 发送的消息
      * @throws Exception 可能抛出的异常
      */
-    protected abstract void doSend(@NotNull String data) throws Exception;
+    protected abstract void doSend(@NotNull DataDto data) throws Exception;
 
     /**
      * 获取客户端感兴趣的类型
@@ -105,18 +111,24 @@ public abstract class Client {
      * @param data 客户端发送过来的数据
      */
     protected void relsoveMessage(@NotNull String data) {
-        DataDto dataDto = LogServer.gson.fromJson(data, DataDto.class);
-        if (DataType.TYPE_SET_DISPLAY_NAME.equals(dataDto.getType())) {
-            // 设置显示的名称
+        DataDto dataDto = LogServer.GSON.fromJson(data, DataDto.class);
+        if (DataType.TYPE_SET_DISPLAY_NAME.equals(dataDto.getType())) { // 设置显示的名称
             mDisplayName = dataDto.getData();
-        } else if (DataType.TYPE_SET_DATA_PROVIDER_TYPE.equals(dataDto.getType())) {
-            List<String> dataTypes = LogServer.gson.fromJson(dataDto.getData(), new TypeToken<List<String>>() {
+        } else if (DataType.TYPE_SET_DATA_PROVIDER.equals(dataDto.getType())) { // 设置自己是什么样的数据类型提供者
+            // 拿到数据提供的类型
+            List<String> dataTypes = LogServer.GSON.fromJson(dataDto.getData(), new TypeToken<List<String>>() {
             }.getType());
             mDataProvideTypes.clear();
             mDataProvideTypes.addAll(dataTypes);
-        } else {
+        } else if (DataType.TYPE_SET_DATA_SUBSCIBE.equals(dataDto.getType())) { // 设置感兴趣的数据类型
+            // 设置自己感兴趣的类型
+            List<String> dataTypes = LogServer.GSON.fromJson(dataDto.getData(), new TypeToken<List<String>>() {
+            }.getType());
+            mDataSubscribeTypes.clear();
+            mDataSubscribeTypes.addAll(dataTypes);
+        } else { // 其余的就甩给消息中央处理器处理
             if (mOnMessageListener == null) {
-                mOnMessageListener.accept(this, data);
+                mOnMessageListener.accept(this, dataDto);
             }
         }
     }
@@ -128,7 +140,7 @@ public abstract class Client {
      */
     public boolean isDisable() {
         try {
-            doSend(LogServer.DATA_HEARTBEAT);
+            doSend(DataDto.HEARTBEAT);
         } catch (Exception e) {
             return false;
         }
@@ -155,7 +167,7 @@ public abstract class Client {
          * @param client 发送消息的客户端实例
          * @param msg    客户端发送过来的消息
          */
-        void accept(@NotNull Client client, @NotNull String msg);
+        void accept(@NotNull Client client, @NotNull DataDto msg);
 
     }
 
